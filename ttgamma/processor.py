@@ -669,7 +669,7 @@ class TTGammaProcessor(processor.ProcessorABC):
 
             eleSF = ak.prod((eleID * eleRECO), axis=-1)
             eleSF_up = ak.prod(((eleID + eleIDerr) * (eleRECO + eleRECOerr)), axis=-1)
-            eleSF_down = ak.prod(((eleID - eleRECO) * (eleRECO - eleRECOerr)), axis=-1)  # FIXME 4 FIXED
+            eleSF_down = ak.prod(((eleID - eleIDerr) * (eleRECO - eleRECOerr)), axis=-1)  # FIXME 4 FIXED
             weights.add("eleEffWeight", weight=eleSF, weightUp=eleSF_up, weightDown=eleSF_down)  # FIXME 4 FIXED
 
             muID = mu_id_sf(tightMuons.eta, tightMuons.pt)
