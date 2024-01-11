@@ -189,10 +189,10 @@ def selectPhotons(photons):
     )
 
     # select tightPhotons, the subset of photons passing the photonSelect cut and the photonID cut
-    tightPhotons = photons[photonSelect & (photons.cutBased >= 3)]  # FIXME 1a FIXED
+    tightPhotons = photons[photonSelect & photonID]  # FIXME 1a FIXED
     # select loosePhotons, the subset of photons passing the photonSelect cut and all photonID cuts
     # except the charged hadron isolation cut applied (photonID_NoChIso)
-    loosePhotons = photons[photonSelect & (photons.cutBased >= 1)  & photonID_NoChIso]  # FIXME 1a FIXED?
+    loosePhotons = photons[photonSelect & photonID_NoChIso]  # FIXME 1a FIXED?
 
     return tightPhotons, loosePhotons
 
@@ -534,14 +534,14 @@ class TTGammaProcessor(processor.ProcessorABC):
         # Hint: using the ak.combinations(array,n) method chooses n unique items from array.
         # More hints are in the twiki
 
-        triJet = ak.combinations(events.Jet, 3, fields = ["j1", "j2", "j3"])  # FIXME 2a
+        triJet = ak.combinations(tightJet, 3, fields = ["j1", "j2", "j3"])  # FIXME 2a
         #Sum together jets from the triJet object and find its pt and mass
         triJetPt = (triJet.j1 + triJet.j2 + triJet.j3).pt  # FIXME 2a
         triJetMass = (triJet.j1 + triJet.j2 + triJet.j3).mass  # FIXME 2a
         #define the M3 variable, the triJetMass of the combination with the highest triJetPt value
         #ak.argmax and ak.firsts will be helpful here)
         highPtmask = ak.argmax(triJetPt, axis = -1, keepdims = True)
-        M3 = triJetMass[highPtmask]
+        M3 = ak.firsts(triJetMass[highPtmask])
 
         
         # For all the other event-level variables, we can form the variables from just
@@ -669,7 +669,7 @@ class TTGammaProcessor(processor.ProcessorABC):
 
             eleSF = ak.prod((eleID * eleRECO), axis=-1)
             eleSF_up = ak.prod(((eleID + eleIDerr) * (eleRECO + eleRECOerr)), axis=-1)
-            eleSF_down = ak.prod(((eleID - eleRECO) * (eleRECO - eleRECOerr)), axis=-1)  # FIXME 4 FIXED
+            eleSF_down = ak.prod(((eleID - eleIDerr) * (eleRECO - eleRECOerr)), axis=-1)  # FIXME 4 FIXED
             weights.add("eleEffWeight", weight=eleSF, weightUp=eleSF_up, weightDown=eleSF_down)  # FIXME 4 FIXED
 
             muID = mu_id_sf(tightMuons.eta, tightMuons.pt)
@@ -862,9 +862,8 @@ class TTGammaProcessor(processor.ProcessorABC):
 
                 # fill M3 histogram, for events passing the phosel selection
 
-                print(ak.flatten(M3[phosel]))
                 output["M3"].fill(
-                    M3=ak.flatten(M3[phosel]),
+                    M3=M3[phosel],
                     category=phoCategory[phosel],
                     lepFlavor=lepton,
                     systematic=syst,
